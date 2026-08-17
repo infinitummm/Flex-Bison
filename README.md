@@ -1,5 +1,7 @@
 # Flex & Bison - Ejemplos del Capitulo 1
 
+## Dylan Torres - Juan Gomez - Javier Rosero
+
 Este repositorio contiene la implementacion, analisis y casos de uso detallados de los Ejemplos 1 al 5 del Capitulo 1 del libro "Flex & Bison" de John Levine.
 
 Cada ejercicio se encuentra organizado en una carpeta individual y esta compuesto unicamente por dos archivos fuente: el escaner lexico (flex.l) y el analizador sintactico (bison.y), disenados para compilarse y trabajar conjuntamente.
