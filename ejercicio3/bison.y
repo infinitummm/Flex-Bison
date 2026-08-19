@@ -2,41 +2,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int yylex(void);
-extern void yyerror(const char *s);
+int yylex(void);
+void yyerror(const char *s);
 %}
 
-%union {
-    char *str;
-}
-
-%token PLUS MINUS TIMES DIVIDE ABS NEWLINE
-%token <str> NUMBER MYSTERY
-
-%%
-tokens:
-    /* vacio */
-    | tokens token_item
-    ;
-
-token_item:
-    PLUS      { printf("PLUS\n"); }
-    | MINUS   { printf("MINUS\n"); }
-    | TIMES   { printf("TIMES\n"); }
-    | DIVIDE  { printf("DIVIDE\n"); }
-    | ABS     { printf("ABS\n"); }
-    | NUMBER  { printf("NUMBER %s\n", $1); free($1); }
-    | NEWLINE { printf("NEWLINE\n"); }
-    | MYSTERY { printf("Mystery character %s\n", $1); free($1); }
-    ;
+%token NUMBER
+%token ADD SUB MUL DIV ABS AND
+%token OP CP
+%token EOL
 
 %%
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Error: %s\n", s);
-}
+calclist: /* vacio */
+    | calclist exp EOL { printf("= %d (0x%X)\n", $2, $2); }
+    | calclist EOL     { /* Linea vacia */ }
+    ;
 
-int main(void) {
+/* exp maneja suma (+), resta (-) y OR bitwise (|) a nivel binario */
+exp: factor
+    | exp ADD factor { $$ = $1 + $3; }
+    | exp SUB factor { $$ = $1 - $3; }
+    | exp ABS factor { $$ = $1 | $3; /* OR binario bit a bit */ }
+    ;
+
+/* factor maneja multiplicacion (*) y division (/) */
+factor: bit_and
+    | factor MUL bit_and { $$ = $1 * $3; }
+    | factor DIV bit_and {
+        if ($3 == 0) {
+            yyerror("division por cero");
+            $$ = 0;
+        } else {
+            $$ = $1 / $3;
+        }
+    }
+    ;
+
+/* bit_and maneja AND bitwise (&) */
+bit_and: term
+    | bit_and AND term { $$ = $1 & $3; /* AND binario bit a bit */ }
+    ;
+
+/* term maneja numeros, ABS unario (|), menos unario (-) y parentesis */
+term: NUMBER
+    | ABS term   { $$ = $2 >= 0 ? $2 : -$2; /* ABS unario */ }
+    | SUB term   { $$ = -$2;               /* Menos unario */ }
+    | OP exp CP  { $$ = $2; }
+    ;
+
+%%
+
+int main(int argc, char **argv) {
     yyparse();
     return 0;
+}
+
+void yyerror(const char *s) {
+    fprintf(stderr, "error: %s\n", s);
 }

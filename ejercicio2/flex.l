@@ -1,16 +1,25 @@
 %{
-#include <string.h>
 #include "bison.tab.h"
+#include <stdio.h>
+#include <stdlib.h>
 %}
 
 %option noyywrap
 
 %%
-"colour"       { yylval.str = strdup("color"); return WORD_TOK; }
-"flavour"      { yylval.str = strdup("flavor"); return WORD_TOK; }
-"clever"       { yylval.str = strdup("smart"); return WORD_TOK; }
-"smart"        { yylval.str = strdup("elegant"); return WORD_TOK; }
-"conservative" { yylval.str = strdup("liberal"); return WORD_TOK; }
-[a-zA-Z]+      { yylval.str = strdup(yytext); return WORD_TOK; }
-.|\n           { yylval.str = strdup(yytext); return OTHER_TOK; }
+
+"+"                 { return ADD; }
+"-"                 { return SUB; }
+"*"                 { return MUL; }
+"/"                 { return DIV; }
+"|"                 { return ABS; }
+"("                 { return OP; }
+")"                 { return CP; }
+0[xX][0-9a-fA-F]+   { yylval = (int)strtol(yytext, NULL, 16); return NUMBER; }
+[0-9]+              { yylval = (int)strtol(yytext, NULL, 10); return NUMBER; }
+\n                  { return EOL; }
+"//".*              { /* Ignorar comentarios */ }
+[ \t]               { /* Ignorar espacios y tabuladores */ }
+.                   { printf("Caracter no reconocido: %c\n", *yytext); }
+
 %%

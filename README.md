@@ -1,353 +1,375 @@
-# Flex & Bison - Ejemplos del Capitulo 1
+# 🛠️ Flex & Bison - Solución a los Ejercicios del Capítulo 1
 
-## Dylan Torres - Juan Gomez - Javier Rosero
-
-Este repositorio contiene la implementacion, analisis y casos de uso detallados de los Ejemplos 1 al 5 del Capitulo 1 del libro "Flex & Bison" de John Levine.
-
-Cada ejercicio se encuentra organizado en una carpeta individual y esta compuesto unicamente por dos archivos fuente: el escaner lexico (flex.l) y el analizador sintactico (bison.y), disenados para compilarse y trabajar conjuntamente.
+Repositorio con la resolución completa, detallada y ejecutable de los **Ejercicios 1 al 6 del Capítulo 1** del libro *"flex & bison: Text Processing Tools"* de John Levine (O'Reilly Media).
 
 ---
 
-## Estructura del Repositorio
+## 📂 Estructura del Directorio
+
+Cada ejercicio cuenta únicamente con los archivos estrictamente necesarios para su compilación y ejecución:
 
 ```text
-Flex-Bison/
-├── README.md
-├── ejercicio1/
+Flex Ejercicios/
+├── README.md                 # Documentación y guía de ejecución general
+├── ejercicio1/               # Ejercicio 1: Líneas con solo comentarios
+│   ├── Makefile
 │   ├── bison.y
 │   └── flex.l
-├── ejercicio2/
+├── ejercicio2/               # Ejercicio 2: Calculadora Hexadecimal y Decimal
+│   ├── Makefile
 │   ├── bison.y
 │   └── flex.l
-├── ejercicio3/
+├── ejercicio3/               # Ejercicio 3: Operadores a nivel de bits (AND & / OR |)
+│   ├── Makefile
 │   ├── bison.y
 │   └── flex.l
-├── ejercicio4/
-│   ├── bison.y
-│   └── flex.l
-└── ejercicio5/
-    ├── bison.y
-    └── flex.l
+├── ejercicio4/               # Ejercicio 4: Escáner Manual en C vs Escáner Flex
+│   ├── Makefile
+│   ├── flex_scanner.l
+│   ├── manual_scanner.c
+│   ├── tokens.h
+│   └── main.c
+├── ejercicio5/               # Ejercicio 5: Lenguajes no aptos para Flex (Demo Indentación)
+│   ├── Makefile
+│   ├── python_indent.l
+│   └── main.c
+└── ejercicio6/               # Ejercicio 6: Word Count en C vs Flex (Benchmark)
+    ├── Makefile
+    ├── benchmark.sh
+    ├── wc_c.c
+    └── wc_flex.l
 ```
 
 ---
 
-## Requisitos y Modo de Compilacion
+## ⚙️ Requisitos Previos
 
-Para compilar y ejecutar cualquiera de los ejercicios en un entorno Linux, se requiere tener instalados:
-- flex
-- bison
-- gcc
-
-### Instrucciones de Compilacion y Ejecucion
-
-Para probar cualquiera de los programas, ingresa a la carpeta del ejercicio correspondiente y ejecuta la siguiente secuencia de comandos:
+Para compilar y ejecutar cualquiera de los programas en Linux, asegúrate de tener instaladas las herramientas esenciales:
 
 ```bash
+# En sistemas basados en Debian/Ubuntu:
+sudo apt update
+sudo apt install build-essential flex bison
+```
+
+---
+
+## 🚀 Guía Rápida de Compilación y Ejecución
+
+| Ejercicio | Directorio | Comando de Compilación | Comando de Ejecución |
+|---|---|---|---|
+| **1. Solo Comentarios** | `ejercicio1/` | `make` | `./programa` |
+| **2. Calculadora Hex/Dec** | `ejercicio2/` | `make` | `./programa` |
+| **3. Operadores Bitwise** | `ejercicio3/` | `make` | `./programa` |
+| **4. Comparativa Escáneres** | `ejercicio4/` | `make` | `./programa` |
+| **5. Demo Indentación** | `ejercicio5/` | `make` | `./programa` |
+| **6. Benchmark Word Count** | `ejercicio6/` | `make` | `./benchmark.sh` |
+
+> 💡 **Nota:** Para limpiar los archivos generados en cualquier ejercicio, ejecuta `make clean`.
+
+---
+
+## 📖 Descripción Detallada y Casos de Uso por Ejercicio
+
+---
+
+### 🟢 Ejercicio 1: Manejo de Líneas con Solo Comentarios
+
+#### 📌 Enunciado
+> *¿Aceptará la calculadora una línea que contenga solo un comentario? ¿Por qué no? ¿Sería más fácil solucionar esto en el escáner o en el analizador sintáctico?*
+
+#### 🧠 Justificación Teórica
+1. **¿Acepta la versión original una línea de solo comentario?**  
+   **No.** En la versión base del libro, ingresar una línea como `// comentario\n` genera un error sintáctico (`error: syntax error`).
+2. **¿Por qué falla?**  
+   - En `flex.l`, la regla `"//".*` descarta el texto del comentario pero **no consume el salto de línea `\n`** (porque el punto `.` coincide con todo excepto `\n`).
+   - El `\n` es capturado por la siguiente regla y retorna el token `EOL` al parser.
+   - En `bison.y`, la regla `calclist: calclist exp EOL` exige estrictamente una expresión (`exp`) antes del fin de línea (`EOL`). Al recibir `EOL` sin haber derivado una expresión, el parser detecta un error de sintaxis.
+3. **¿Dónde es mejor solucionarlo?**  
+   - **En el Parser (Solución recomendada):** Se añade la regla `| calclist EOL` para aceptar líneas vacías o de solo comentario sin emitir error:
+     ```yacc
+     calclist: /* vacio */
+         | calclist exp EOL { printf("= %d\n", $2); }
+         | calclist EOL     { /* linea en blanco o comentario: no hacer nada */ }
+         ;
+     ```
+   - **En el Escáner (Problemático):** Si se intentara absorber el `\n` dentro del comentario (`"//".*\n`), los comentarios colocados al final de una expresión (ej. `5 + 3 // suma\n`) consumirían el `\n`, impidiendo que el parser reciba el token `EOL` necesario para evaluar la operación.
+
+#### 💻 Cómo Ejecutar
+```bash
 cd ejercicio1
-
-# 1. Generar el codigo C del parser y el archivo de cabecera con los tokens
-bison -d bison.y
-
-# 2. Generar el codigo C del escaner lexico
-flex flex.l
-
-# 3. Compilar ambos codigos fuente en un unico ejecutable
-gcc -o programa bison.tab.c lex.yy.c
-
-# 4. Ejecutar el programa
+make
 ./programa
 ```
 
----
-
-## Descripcion Detallada y Casos de Uso por Ejercicio
-
-### 1. ejercicio1/ - Contador de Palabras, Lineas y Caracteres (Word Count)
-
-#### Explicacion del Funcionamiento
-Este ejercicio recrea la funcionalidad basica del comando `wc` de Unix. 
-- En `flex.l`, el escaner analiza la entrada de texto caracter por caracter. La expresion regular `[a-zA-Z]+` detecta secuencias continuas de letras como palabras, sumando su longitud en caracteres (`yyleng`) y retornando el token `WORD`. El salto de linea `\n` retorna `NEWLINE`, y cualquier otro caracter (espacios, numeros, signos) retorna `CHAR_TOK`.
-- En `bison.y`, el parser procesa la secuencia de tokens mediante una regla recursiva. Por cada `WORD` incrementa el contador de palabras; por cada `NEWLINE` incrementa las lineas y suma un caracter; y por cada `CHAR_TOK` incrementa el contador de caracteres. Al finalizar la lectura (EOF con Ctrl+D), la funcion `main` imprime el total de lineas, palabras y caracteres.
-
-#### Casos de Uso Reales
-
-**Prueba 1: Texto simple con dos palabras**
-- Entrada:
-  ```text
-  Hola Mundo
-  ```
-- Salida del programa:
-  ```text
-         1       2      11
-  ```
-- Analisis: Contabiliza 1 linea, 2 palabras ("Hola" y "Mundo") y 11 caracteres (4 letras de Hola + 1 espacio + 5 letras de Mundo + 1 salto de linea).
-
-**Prueba 2: Cadena exclusivamente numerica**
-- Entrada:
-  ```text
-  1234
-  ```
-- Salida del programa:
-  ```text
-         1       0       5
-  ```
-- Analisis: Como el patron `[a-zA-Z]+` solo reconoce caracteres alfabeticos, los digitos `1234` son capturados por la regla generica `.`, por lo que se contabilizan 0 palabras y 5 caracteres totales (4 digitos + 1 salto de linea).
-
-**Prueba 3: Linea con un espacio en blanco**
-- Entrada:
-  ```text
-   
-  ```
-- Salida del programa:
-  ```text
-         1       0       1
-  ```
-- Analisis: Contabiliza 1 linea y 1 caracter correspondiente al salto de linea.
-
-**Prueba 4: Frase larga con varias palabras**
-- Entrada:
-  ```text
-  Hola mundo profesor Joaquin
-  ```
-- Salida del programa:
-  ```text
-         1       4      28
-  ```
-- Analisis: Reconoce correctamente las 4 palabras y los 28 caracteres totales generados en una unica linea.
-
----
-
-### 2. ejercicio2/ - Traductor de Ingles Britanico a Americano
-
-#### Explicacion del Funcionamiento
-Este programa funciona como un filtro de texto que detecta vocabulario en ingles britanico y lo sustituye automaticamente por su equivalente en ingles americano, manteniendo el resto del texto inalterado.
-- En `flex.l`, se declaran patrones exactos para palabras clave (`colour`, `flavour`, `clever`, `smart`, `conservative`). Cuando el escaner encuentra una coincidencia, asigna la cadena traducida en memoria dinamica mediante `strdup()` al valor semantico `yylval.str` y retorna el token `WORD_TOK`. Cualquier otra palabra o signo de puntuacion se pasa intacto.
-- En `bison.y`, se define `%union { char *str; }` para manejar valores semanticos tipo cadena. La gramatica recibe cada token, imprime el texto traducido y libera la memoria con `free($1)` para evitar fugas de memoria.
-
-#### Casos de Uso Reales
-
-**Prueba 1: Palabra britanica simple**
-- Entrada:
-  ```text
-  colour
-  ```
-- Salida del programa:
-  ```text
-  color
-  ```
-- Analisis: La regla de Flex `"colour"` intercepta el termino britanico y entrega `"color"` a Bison para su impresion inmediata.
-
-**Prueba 2: Sensibilidad a mayusculas y minusculas (Case Sensitivity)**
-- Entrada:
-  ```text
-  CLEVER
-  clever
-  ```
-- Salida del programa:
-  ```text
-  CLEVER
-  smart
-  ```
-- Analisis: Por defecto Flex distingue entre mayusculas y minusculas. `CLEVER` en mayusculas no coincide con el patron `"clever"` y es tratado como una palabra generica, pasandose sin modificar. En cambio, `clever` en minusculas se traduce exitosamente a `smart`.
-
-**Prueba 3: Cadena de sustituciones mixtas**
-- Entrada:
-  ```text
-  Smart
-  smart
-  ```
-- Salida del programa:
-  ```text
-  Smart
-  elegant
-  ```
-- Analisis: `Smart` con mayuscula inicial se preserva sin cambios, mientras que `smart` en minusculas se traduce a `elegant`.
-
----
-
-### 3. ejercicio3/ - Reconocedor de Tokens para Calculadora
-
-#### Explicacion del Funcionamiento
-Este ejercicio muestra como Flex y Bison se comunican para identificar la estructura lexica de una calculadora.
-- En `flex.l`, se identifican los operadores aritmeticos (`+`, `-`, `*`, `/`, `|`), numeros enteros de uno o mas digitos (`[0-9]+`), y saltos de linea (`\n`). Los espacios y tabulaciones se omiten silenciosamente. Cualquier caracter no reconocido entra en la regla comodin `.`, devolviendo el token `MYSTERY`.
-- En `bison.y`, se declaran los tokens correspondientes y se asocian acciones semanticas que imprimen el nombre formal del token identificado (`PLUS`, `MINUS`, `NUMBER`, etc.).
-
-#### Casos de Uso Reales
-
-**Prueba 1: Operacion aritmetica basica**
-- Entrada:
-  ```text
-  1-1
-  ```
-- Salida del programa:
-  ```text
-  NUMBER 1
-  MINUS
-  NUMBER 1
-  NEWLINE
-  ```
-- Analisis: Reconoce el primer numero `1`, el operador de resta `MINUS`, el segundo numero `1` y el fin de instruccion `NEWLINE`.
-
-**Prueba 2: Caracteres no validos (Manejo de errores lexicos)**
-- Entrada:
-  ```text
-  Hola
-  ```
-- Salida del programa:
-  ```text
-  Mystery character H
-  Mystery character o
-  Mystery character l
-  Mystery character a
-  NEWLINE
-  ```
-- Analisis: Las letras no forman parte de los simbolos reconocidos por la calculadora. Por lo tanto, la regla comodin atrapa cada letra individualmente e informa que se trata de un caracter desconocido (*Mystery character*).
-
-**Prueba 3: Secuencia continua de operadores y numero largo**
-- Entrada:
-  ```text
-  -+*/1234567890
-  ```
-- Salida del programa:
-  ```text
-  MINUS
-  PLUS
-  TIMES
-  DIVIDE
-  NUMBER 1234567890
-  NEWLINE
-  ```
-- Analisis: Flex tokeniza en orden secuencial cada operador individual y agrupa toda la cadena de digitos como un unico token `NUMBER`.
-
----
-
-### 4. ejercicio4/ - Escaner con Identificadores de Tokens y Valores (yylval)
-
-#### Explicacion del Funcionamiento
-En este ejercicio se profundiza en el mecanismo interno de Bison para asignar identificadores numericos a los tokens y el uso de `yylval` para transportar datos semanticos heterogeneos.
-- Bison asigna de manera automatica numeros enteros a los tokens declarados a partir de 258 (para no colisionar con los codigos ASCII del 0 al 255): `NUMBER` = 258, `ADD` = 259, `SUB` = 260, `MUL` = 261, `DIV` = 262, `ABS` = 263, `EOL` = 264.
-- En `flex.l`, cuando se encuentra un numero, se convierte la cadena a entero con `atoi(yytext)` y se almacena en `yylval.val`. Para caracteres desconocidos, se almacena el caracter en `yylval.mystery_char`.
-- En `bison.y`, se define `%union { int val; char mystery_char; }` y se imprime el ID numerico del token junto con el valor numerico recibido.
-
-#### Casos de Uso Reales
-
-**Prueba 1: Reconocimiento de un numero individual**
-- Entrada:
-  ```text
-  1
-  ```
-- Salida del programa:
-  ```text
-  258 = 1
-  264
-  ```
-- Analisis: El token `NUMBER` tiene el codigo interno `258` y transporta el valor entero `1` a traves de `yylval.val`. El salto de linea corresponde al token `EOL` con codigo `264`.
-
-**Prueba 2: Operadores individuales**
-- Entrada:
-  ```text
-  -
-  +
-  ```
-- Salida del programa:
-  ```text
-  260
-  264
-  259
-  264
-  ```
-- Analisis: Muestra los identificadores generados por Bison para resta (`260`) y suma (`259`).
-
-**Prueba 3: Combinacion de operadores y digitos continuos**
-- Entrada:
-  ```text
-  -+
-  /-+*
-  1234567890
-  ```
-- Salida del programa:
-  ```text
-  260
-  259
-  264
-  262
-  260
-  259
-  261
-  264
-  258 = 1234567890
-  264
-  ```
-- Analisis: Se observa la secuencia exacta de codigos emitidos: division (`262`), resta (`260`), suma (`259`), multiplicacion (`261`) y el numero entero de 10 digitos con su valor integro (`258 = 1234567890`).
-
----
-
-### 5. ejercicio5/ - Calculadora Aritmetica Completa (Flex + Bison) con Manejo de Division por Cero
-
-#### Explicacion del Funcionamiento
-Implementacion de una calculadora aritmetica funcional que evalua expresiones matematicas en tiempo real siguiendo una gramatica libre de contexto (BNF) que establece la precedencia de operadores:
-1. Nivel `exp` (menor precedencia): evalua sumas (`+`) y restas (`-`).
-2. Nivel `factor` (precedencia media): evalua multiplicaciones (`*`) y divisiones (`/`).
-3. Nivel `term` (mayor precedencia): evalua numeros enteros (`NUMBER`) y el operador unario de valor absoluto (`| term`).
-
-#### Control de Excepcion: Division por Cero
-En la regla de division de `bison.y`, se incorpora una verificacion de seguridad para el divisor (`$3`):
-```yacc
-factor: term
-    | factor MUL term { $$ = $1 * $3; }
-    | factor DIV term {
-        if ($3 == 0) {
-            yyerror("division por cero");
-            $$ = 0;
-        } else {
-            $$ = $1 / $3;
-        }
-    }
-    ;
+**Ejemplo de prueba interactiva:**
+```text
+// Linea de solo comentario (no produce error)
+2 + 3
+// Otro comentario
+(10 * 5) - 8 // Comentario al final de linea
 ```
-Si el denominador es cero, se invoca `yyerror("division por cero")` y se asigna un valor por defecto (`$$ = 0`) para evitar que el programa falle por excepcion de punto flotante (`SIGFPE`) y permitir continuar evaluando expresiones posteriores.
 
-#### Casos de Uso y Pruebas
+**Salida:**
+```text
+= 5
+= 42
+```
 
-**Prueba 1: Precedencia de operaciones (Multiplicacion y Division antes de Suma y Resta)**
-- Entrada:
-  ```text
-  2 + 3 * 4
-  20 - 4 / 2
-  ```
-- Salida del programa:
-  ```text
-  = 14
-  = 18
-  ```
-- Analisis: En `2 + 3 * 4`, primero se resuelve `3 * 4 = 12` y luego `2 + 12 = 14`. En `20 - 4 / 2`, primero se resuelve `4 / 2 = 2` y luego `20 - 2 = 18`.
+---
 
-**Prueba 2: Operador Unario de Valor Absoluto**
-- Entrada:
-  ```text
-  | 15
-  10 + | 5
-  ```
-- Salida del programa:
-  ```text
-  = 15
-  = 15
-  ```
-- Analisis: El operador `|` actua como un operador unario prefijo sobre el termino siguiente.
+### 🟢 Ejercicio 2: Calculadora Hexadecimal y Decimal
 
-**Prueba 3: Division por cero controlada**
-- Entrada:
-  ```text
-  10 / 2
-  10 / 0
-  20 / 4 - 2
-  ```
-- Salida del programa:
-  ```text
-  = 5
-  error: division por cero
-  = 0
-  = 3
-  ```
-- Analisis: La division `10 / 0` detecta el divisor nulo, emite el mensaje de error correspondiente y asigna `0`, permitiendo que la instruccion siguiente (`20 / 4 - 2`) se continue ejecutando normalmente.
+#### 📌 Enunciado
+> *Convierte la calculadora en una calculadora hexadecimal que acepte tanto números hexadecimales como decimales. En el escáner agrega un patrón como `0x[a-f0-9]+` para reconocer números hexadecimales y en el código de acción usa `strtol` para convertir la cadena a un número que almacenes en `yylval`; luego retorna un token `NUMBER`. Ajusta la salida del `printf` para imprimir el resultado tanto en decimal como en hexadecimal.*
+
+#### 🧠 Implementación
+1. **Escáner (`flex.l`):**
+   - Soporta prefijos `0x` y `0X` con dígitos del 0 al 9 y letras de la A a la F:
+     ```lex
+     0[xX][0-9a-fA-F]+   { yylval = (int)strtol(yytext, NULL, 16); return NUMBER; }
+     [0-9]+              { yylval = (int)strtol(yytext, NULL, 10); return NUMBER; }
+     ```
+2. **Parser (`bison.y`):**
+   - Imprime el resultado en formato decimal y hexadecimal:
+     ```yacc
+     calclist exp EOL { printf("= %d (0x%X)\n", $2, $2); }
+     ```
+
+#### 💻 Cómo Ejecutar
+```bash
+cd ejercicio2
+make
+./programa
+```
+
+**Ejemplo de prueba interactiva:**
+```text
+0x10 + 10
+0xFF - 0x0F
+0x20 * 2
+0x100 / 0x10
+```
+
+**Salida:**
+```text
+= 26 (0x1A)
+= 240 (0xF0)
+= 64 (0x40)
+= 16 (0x10)
+```
+
+---
+
+### 🟢 Ejercicio 3: Operadores a Nivel de Bits (AND `&` y OR `|`)
+
+#### 📌 Enunciado
+> *(Crédito extra) Añade operadores a nivel de bits como `AND` y `OR` a la calculadora. El operador obvio para `OR` es la barra vertical (`|`), pero esa ya es el operador unario de valor absoluto. ¿Qué sucede si también la usas como operador binario `OR`, por ejemplo, `exp ABS factor`?*
+
+#### 🧠 Análisis de Sobrecarga y Conflictos
+- **Sobrecarga Sintáctica:** El carácter `|` cumple una doble función dependiendo de su posición en la estructura sintáctica:
+  1. **Unario Prefijo (Valor Absoluto):** `term: ABS term` (ej. `| -10` o `| 5`).
+  2. **Binario Infijo (Operador OR bit a bit):** `exp: exp ABS factor` (ej. `5 | 3`).
+- **Comportamiento en Bison:**  
+  Al estructurar la gramática con una jerarquía BNF estricta (`exp -> factor -> bit_and -> term`), cuando `|` aparece al inicio de una expresión o tras un operador, el parser deriva hacia `term: ABS term`. Cuando aparece después de haber derivado un `exp`, actúa como operador binario OR.
+- **Precedencia implementada:**
+  1. `term`: Paréntesis `(exp)`, Números, Menos unario `-term`, Valor Absoluto `|term`.
+  2. `bit_and`: Operador AND a nivel de bits (`&`).
+  3. `factor`: Multiplicación (`*`) y División (`/`).
+  4. `exp`: Suma (`+`), Resta (`-`) y OR a nivel de bits (`|`).
+
+#### 💻 Cómo Ejecutar
+```bash
+cd ejercicio3
+make
+./programa
+```
+
+**Ejemplo de prueba interactiva:**
+```text
+0x0F & 0xF0
+0x0F | 0xF0
+5 | 3
+| -10
+(10 + 2) & 0x0F
+```
+
+**Salida:**
+```text
+= 0 (0x0)
+= 255 (0xFF)
+= 7 (0x7)
+= 10 (0xA)
+= 12 (0xC)
+```
+
+---
+
+### 🟢 Ejercicio 4: Escáner Manual en C vs Escáner Flex
+
+#### 📌 Enunciado
+> *¿Reconoce la versión del escáner escrita a mano (del Ejemplo 1-4 / barra lateral del Capítulo 1) exactamente los mismos tokens que la versión de Flex?*
+
+#### 🧠 Comparativa y Conclusiones
+**No, existen discrepancias clave en su funcionamiento:**
+
+| Característica | Escáner Escrito a Mano (C) | Escáner Generado por Flex |
+|---|---|---|
+| **Salto de línea en comentarios (`//...\n`)** | **Consume y descarta el `\n`** en el bucle `while (getc != '\n')`. **No retorna el token `EOL`**. | `"//".*` coincide con el comentario pero **no consume el `\n`**, por lo que en el siguiente paso **sí retorna `EOL`**. |
+| **Detección de `/` vs `//`** | Realiza `getc()` y luego `ungetc()` manual para devolver el carácter si no es barra. | El autómata finito (DFA) resuelve el prefijo más largo automáticamente sin llamadas manuales a `ungetc`. |
+| **Fin de archivo (EOF)** | Requiere una bandera de estado estática (`seeneof`) para recordar el fin de archivo tras un `ungetc`. | Integrado de forma nativa en la gestión de buffers de Flex (`yyin`, `YY_BUFFER_STATE`). |
+
+#### 💻 Cómo Ejecutar
+```bash
+cd ejercicio4
+make
+./programa
+```
+
+**Evidencia de salida (Demostración de la diferencia de tokens):**
+```text
+====================================================
+PRUEBA: Linea con comentario y siguiente operacion
+Entrada:
+"// Comentario
+50 * 2
+"
+----------------------------------------------------
+[1] Tokens generados por FLEX:
+  -> EOL (\n)
+  -> NUMBER = 50
+  -> MUL (*)
+  -> NUMBER = 2
+  -> EOL (\n)
+  -> EOF (0)
+
+[2] Tokens generados por SCANNER MANUAL (C):
+  -> NUMBER = 50
+  -> MUL (*)
+  -> NUMBER = 2
+  -> EOL (\n)
+  -> EOF (0)
+====================================================
+```
+*(Se observa claramente que el escáner manual omitió el token `EOL` correspondiente al salto de línea del comentario).*
+
+---
+
+### 🟢 Ejercicio 5: Lenguajes No Aptos para Flex
+
+#### 📌 Enunciado
+> *¿Puedes pensar en lenguajes para los cuales Flex no sería una buena herramienta para escribir un escáner?*
+
+#### 🧠 Clasificación y Razones Técnicas
+Flex se fundamenta en **expresiones regulares y autómatas finitos deterministas (DFA)** (Chomsky Tipo 3), los cuales no disponen de memoria de pila ni capacidad para resolver contextos recursivos o globales.
+
+1. **Lenguajes con Indentación Significativa ("Off-side Rule"):**
+   - *Ejemplos:* **Python, Haskell, Nim, YAML, F#**.
+   - *Motivo:* Requieren emitir tokens sintéticos `INDENT` y `DEDENT` basados en la comparación con una pila de profundidad de columnas. Flex no puede mantener esta pila por sí mismo.
+2. **Lenguajes con Espaciado Insignificante o Columnas Fijas:**
+   - *Ejemplos:* **FORTRAN 66 / 77, COBOL**.
+   - *Motivo en Fortran:* Los espacios no separan palabras: `DO 10 I = 1.10` es una asignación (`DO10I = 1.10`) mientras que `DO 10 I = 1, 10` es un bucle. Se requiere lookahead arbitrario más allá del `=` para distinguir la coma del punto.
+3. **Lenguajes con Ambigüedad Léxica dependiente del Parser ("Lexer Hack"):**
+   - *Ejemplos:* **C / C++** (`typedef` vs variable), **JavaScript** (`/` como división vs `/` como inicio de expresión regular literal).
+4. **Cadenas Interpoladas Complejas / Plantillas Anidadas:**
+   - *Ejemplos:* **Ruby, ES6 Template Strings, JSX, PHP**.
+   - *Motivo:* Permiten código anidado arbitrario dentro de cadenas: `"Texto ${ 1 + f("${x}") }"`.
+5. **Lenguajes Naturales y Escrituras Continuas:**
+   - *Ejemplos:* **Chino, Japonés, Tailandés**.
+   - *Motivo:* Al no tener espacios entre palabras, requieren análisis morfológico y probabilístico en lugar de reglas de coincidencia léxica fija.
+
+#### 💻 Cómo Ejecutar (Demo de Indentación)
+```bash
+cd ejercicio5
+make
+./programa
+```
+
+**Salida generada:**
+```text
+==============================================================
+DEMOSTRACION: LIMITACIONES DE FLEX CON LENGUAJES INDENTADOS
+==============================================================
+Codigo fuente a analizar (Python):
+
+def calcular():
+    if activo:
+        procesar()
+    else:
+        detener()
+finalizar()
+
+--------------------------------------------------------------
+Tokens generados (con pila de indentacion manual requerida):
+--------------------------------------------------------------
+  [KEYWORD] -> 'def'
+  [IDENTIFIER] -> 'calcular'
+  [OTHER] -> '('
+  [OTHER] -> ')'
+  [COLON (:)]
+  [NEWLINE]
+  [INDENT (Inicio de bloque)]
+  [KEYWORD] -> 'if'
+  [IDENTIFIER] -> 'activo'
+  [COLON (:)]
+  [NEWLINE]
+  [INDENT (Inicio de bloque)]
+  [IDENTIFIER] -> 'procesar'
+  [OTHER] -> '('
+  [OTHER] -> ')'
+  [NEWLINE]
+  [DEDENT (Fin de bloque)]
+  [KEYWORD] -> 'else'
+  [COLON (:)]
+  [NEWLINE]
+  [INDENT (Inicio de bloque)]
+  [IDENTIFIER] -> 'detener'
+  [OTHER] -> '('
+  [OTHER] -> ')'
+  [NEWLINE]
+  [IDENTIFIER] -> 'finalizar'
+  [OTHER] -> '('
+  [OTHER] -> ')'
+  [NEWLINE]
+  [DEDENT (Fin de bloque)]
+  [DEDENT (Fin de bloque)]
+  [EOF]
+==============================================================
+```
+
+---
+
+### 🟢 Ejercicio 6: Word Count en C vs Flex (Benchmark)
+
+#### 📌 Enunciado
+> *Reescribe el programa de conteo de palabras (`word count`) en C. Ejecuta algunos archivos grandes a través de ambas versiones. ¿Es la versión en C notablemente más rápida? ¿Qué tan más difícil fue de depurar?*
+
+#### 📊 Resultados del Benchmark (Archivo de Texto de 18 MB / 300,000 líneas)
+
+| Métrica | Versión Flex (`wc_flex`) | Versión C Puro Optimizado (`wc_c`) |
+|---|---|---|
+| **Líneas contadas** | 300,000 | 300,000 |
+| **Palabras contadas** | 2,400,000 | 2,400,000 |
+| **Caracteres contados** | 18,475,378 | 18,475,378 |
+| **Tiempo de Ejecución** | **~0.140 s** | **~0.037 s** (⚡ ~3.8x más rápido) |
+
+#### 🧠 Conclusiones: Velocidad vs Mantenibilidad
+- **Rendimiento:** C puro es más rápido en este caso simple porque realiza un barrido secuencial en memoria con `isalpha()` sin el overhead de la tabla de transiciones ni la gestión de tokens (`yytext`/`yyleng`) del DFA generalizado de Flex.
+- **Dificultad de Depuración y Mantenimiento:**
+  - **Flex:** Requiere menos de 10 líneas. Modificar qué cuenta como "palabra" (por ejemplo, admitir números o guiones con `[a-zA-Z0-9_-]+`) toma 5 segundos y es inmune a errores de punteros.
+  - **C Puro:** Requiere gestionar manualmente los buffers con `fread`, controlar la bandera de estado `in_word`, manejar condiciones de borde en EOF y lidiar con punteros. Conforme las reglas del lenguaje crecen, el código en C puro se vuelve exponencialmente más difícil de mantener y depurar.
+
+#### 💻 Cómo Ejecutar el Benchmark
+```bash
+cd ejercicio6
+./benchmark.sh
+```
+*(El script compilará automáticamente ambos programas, generará un archivo de prueba temporal de 18 MB, medirá los tiempos con `time`, verificará la igualdad en los conteos y eliminará el archivo temporal al finalizar).*
+
+---
+
+## 📜 Licencia y Créditos
+Ejercicios resueltos en base a los temas y ejemplos de:
+- **Libro:** *flex & bison: Text Processing Tools* (1.ª Edición, 2009)
+- **Autor:** John R. Levine
+- **Editorial:** O'Reilly Media

@@ -1,10 +1,11 @@
 %{
-#include "bison.tab.h"
+#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
 %}
 
 %option noyywrap
+%option prefix="flex_"
 
 %%
 
@@ -17,8 +18,8 @@
 ")"     { return CP; }
 [0-9]+  { yylval = atoi(yytext); return NUMBER; }
 \n      { return EOL; }
-"//".*  { /* Ignorar comentarios hasta el final de la linea */ }
-[ \t]   { /* Ignorar espacios y tabuladores */ }
-.       { printf("Caracter no reconocido: %c\n", *yytext); }
+"//".*  { /* Flex ignora el comentario pero NO el \n */ }
+[ \t]   { /* Ignora espacios y tabs */ }
+.       { printf("[Flex] Caracter no reconocido: %c\n", *yytext); }
 
 %%

@@ -1,42 +1,52 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-extern int yylex(void);
-extern void yyerror(const char *s);
+int yylex(void);
+void yyerror(const char *s);
 %}
 
-%union {
-    char *str;
-}
-
-%token <str> WORD_TOK OTHER_TOK
-
-%%
-text:
-    /* vacio */
-    | text item
-    ;
-
-item:
-    WORD_TOK {
-        printf("%s", $1);
-        free($1);
-    }
-    | OTHER_TOK {
-        printf("%s", $1);
-        free($1);
-    }
-    ;
+%token NUMBER
+%token ADD SUB MUL DIV ABS
+%token OP CP
+%token EOL
 
 %%
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Error: %s\n", s);
-}
+calclist: /* vacio */
+    | calclist exp EOL { printf("= %d (0x%X)\n", $2, $2); }
+    | calclist EOL     { /* Linea vacia / comentario */ }
+    ;
 
-int main(void) {
+exp: factor
+    | exp ADD factor { $$ = $1 + $3; }
+    | exp SUB factor { $$ = $1 - $3; }
+    ;
+
+factor: term
+    | factor MUL term { $$ = $1 * $3; }
+    | factor DIV term {
+        if ($3 == 0) {
+            yyerror("division por cero");
+            $$ = 0;
+        } else {
+            $$ = $1 / $3;
+        }
+    }
+    ;
+
+term: NUMBER
+    | ABS term   { $$ = $2 >= 0 ? $2 : -$2; }
+    | OP exp CP  { $$ = $2; }
+    ;
+
+%%
+
+int main(int argc, char **argv) {
     yyparse();
     return 0;
+}
+
+void yyerror(const char *s) {
+    fprintf(stderr, "error: %s\n", s);
 }
