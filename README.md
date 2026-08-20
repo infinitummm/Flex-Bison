@@ -297,8 +297,3 @@ gcc -O2 -o wc_c wc_c.c
 ./wc_c wc_c.c
 ```
 
----
-
-## Licencia y Creditos
-Ejercicios desarrollados a partir de los conceptos y ejercicios de:
-- **Libro:** *flex & bison: Text Processing Tools* (John R. Levine, O'Reilly Media).
