@@ -56,13 +56,10 @@ gcc -o programa bison.tab.c lex.yy.c
 ./programa
 ```
 
-**Ejemplo de entrada y salida:**
+**Prueba**
 
-| Entrada           | Salida               |
-|-------------------|----------------------|
-| `0x10 + 10`       | `= 26 (0x1A)`        |
-| `0xFF - 0x0F`     | `= 240 (0xF0)`       |
-| `0x20 * 2`        | `= 64 (0x40)`        |
+<img width="498" height="264" alt="image" src="https://github.com/user-attachments/assets/6d141330-f8e5-4b33-8cad-b8a6fcae9c1f" />
+
 
 ---
 
@@ -79,15 +76,11 @@ El símbolo `|` se emplea tanto para el valor absoluto (unario) como para la ope
 
 El operador `&` se maneja de manera análoga con la precedencia adecuada.
 
-**Compilación y prueba** (similar al ejercicio anterior) y ejemplos de entrada/salida:
 
-| Entrada           | Salida               |
-|-------------------|----------------------|
-| `0x0F & 0xF0`     | `= 0 (0x0)`          |
-| `0x0F | 0xF0`     | `= 255 (0xFF)`       |
-| `5 | 3`           | `= 7 (0x7)`          |
-| `| -10`           | `= 10 (0xA)`         |
-| `(10 + 2) & 0x0F` | `= 12 (0xC)`         |
+**Prueba**
+
+<img width="387" height="366" alt="image" src="https://github.com/user-attachments/assets/466e3685-5eb0-490e-ae9a-71163e6b23ea" />
+
 
 ---
 
