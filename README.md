@@ -120,31 +120,27 @@ Flex está basado en expresiones regulares y autómatas finitos deterministas, p
 **Enunciado:**  
 Implemente un contador de palabras (líneas, palabras y caracteres) en C puro y compárelo con la versión hecha con Flex. ¿Es notablemente más rápida la versión en C? ¿Cuál es más fácil de depurar?
 
-**Resultados** (con un archivo de prueba de 18 MB, 300 000 líneas y 2 400 000 palabras):
+**Resultados** :
 
-| Métrica                 | Versión Flex | Versión C optimizada |
-|-------------------------|--------------|----------------------|
-| Tiempo de ejecución     | ~0.140 s     | ~0.037 s             |
-| Líneas contadas         | 300 000      | 300 000              |
-| Palabras contadas       | 2 400 000    | 2 400 000            |
-| Caracteres contados     | 18 475 378   | 18 475 378           |
+<img width="374" height="356" alt="image" src="https://github.com/user-attachments/assets/a5fa1cb1-de57-40c3-baf4-f926547a8dc3" />
+
 
 **Conclusiones:**
 
-- **Rendimiento:** la versión en C es unas 3,8 veces más rápida en este caso, porque un bucle sencillo con buffer y llamadas a `isalpha()` genera muy pocas instrucciones, sin la sobrecarga de la gestión de estados de Flex.
-- **Mantenibilidad:** la versión con Flex es mucho más concisa (unas pocas líneas declarativas) y, ante cambios en la definición de “palabra”, solo hay que modificar la expresión regular. En C puro hay que manejar manualmente el estado, los buffers y los casos límite, lo que se vuelve complejo a medida que crecen las reglas.
+la versión en C puro es bastante más rápida. Tardó apenas 0.021 segundos frente a los 0.071 de Flex, o sea, es unas 3.4 veces más veloz. Esto pasa porque C va directo al grano leyendo la memoria, sin hacer todo ese trabajo extra que hace Flex por debajo para manejar los estados del programa.
+
+Pero la verdad es que, aunque C gane en velocidad, Flex es mil veces más fácil de mantener. Si el día de mañana te toca cambiar la regla de qué cuenta como una "palabra", en Flex solo cambias un texto corto y ya está. En C tendrías que cambiar la lógica a mano y es súper fácil equivocarse o dañar el programa.
 
 **Compilación y prueba:**
 
 ```bash
-# Versión Flex
+cd ejercicio6
+# 1. Compilar versión Flex
 flex wc_flex.l
 gcc -O2 -o wc_flex lex.yy.c
-
-# Versión C
+# 2. Compilar versión C puro
 gcc -O2 -o wc_c wc_c.c
-
-# Ejecutar sobre un archivo
-./wc_flex archivo.txt
-./wc_c archivo.txt
+# 3. Comparar tiempos y resultados con el archivo de prueba:
+time ./wc_flex texto_prueba.txt
+time ./wc_c texto_prueba.txt
 ```
