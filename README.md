@@ -1,6 +1,6 @@
 # Flex & Bison - Solucion a los Ejercicios del Capitulo 1
 
-Repositorio con la resolucion completa, explicada y ejecutable de los Ejercicios 1 al 6 del Capitulo 1 del libro "flex & bison: Text Processing Tools" de John Levine (O'Reilly Media).
+Repositorio con la resolucion completa, explicada y ejecutable de los Ejercicios 1 al 6 del Capitulo 1 del libro "flex & bison".
 
 ---
 ## Dylan Torres - Juan Gomez - Javier Rosero
