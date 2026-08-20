@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
-#define BUFFER_SIZE 16384 /* 16KB de buffer, similar al de Flex */
+#define BUFFER_SIZE 16384 /* 16KB de buffer */
 
 int main(int argc, char **argv) {
     FILE *f = stdin;
@@ -13,6 +14,9 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     int chars = 0;
     int words = 0;
@@ -40,10 +44,18 @@ int main(int argc, char **argv) {
         }
     }
 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
     if (f != stdin) {
         fclose(f);
     }
 
-    printf("%8d%8d%8d\n", lines, words, chars);
+    double tiempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    printf("Lineas contadas: %d\n", lines);
+    printf("Palabras contadas: %d\n", words);
+    printf("Caracteres contados: %d\n", chars);
+    printf("Tiempo de ejecucion: %.6f segundos\n", tiempo);
+
     return 0;
 }

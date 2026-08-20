@@ -1,7 +1,9 @@
 %option noyywrap
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 int chars = 0;
 int words = 0;
@@ -23,7 +25,24 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
     yylex();
-    printf("%8d%8d%8d\n", lines, words, chars);
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    if (yyin && yyin != stdin) {
+        fclose(yyin);
+    }
+
+    double tiempo = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    printf("Lineas contadas: %d\n", lines);
+    printf("Palabras contadas: %d\n", words);
+    printf("Caracteres contados: %d\n", chars);
+    printf("Tiempo de ejecucion: %.6f segundos\n", tiempo);
+
     return 0;
 }
