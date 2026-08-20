@@ -3,6 +3,8 @@
 Este documento contiene las respuestas y explicaciones de los seis ejercicios del primer capítulo del libro sobre Flex y Bison.  
 Las preguntas conceptuales se responden de forma directa; los ejercicios de programación incluyen el planteamiento, el funcionamiento y ejemplos de ejecución.
 
+## Dylan Torre - Juan Gomez - Javier Rosero
+
 ---
 
 ## Ejercicio 1 – Comentarios en la calculadora
